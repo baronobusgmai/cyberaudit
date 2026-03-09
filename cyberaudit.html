@@ -3,148 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTINEL v3.1 - Monitor</title>
+    <title>SENTINEL v3.1 | CYBERAUDIT</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --neon-cyan: #00f3ff;
             --neon-pink: #ff0055;
-            --bg-dark: #050505;
-            --panel-bg: rgba(20, 20, 25, 0.9);
+            --bg-black: #050508;
+            --panel-bg: rgba(13, 13, 20, 0.95);
         }
 
+        /* 1. EL BLINDAJE: Prohibido salirse de la pantalla */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            background-color: var(--bg-dark);
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden; /* Prohibido el scroll horizontal */
-        }
-
-        /* CONTENEDOR MAESTRO */
-        .sentinel-container {
+            background-color: var(--bg-black);
+            color: #fff;
+            font-family: 'Segoe UI', Consolas, monospace;
+            height: 100vh;
+            width: 100vw;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            overflow: hidden; /* Elimina el scroll horizontal de raíz */
         }
 
-        .header {
+        /* 2. HEADER ORIGINAL */
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px 20px;
+            background: #000;
             border-bottom: 2px solid var(--neon-cyan);
-            padding-bottom: 10px;
+            flex-shrink: 0;
         }
 
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
-        }
-
-        .stat-card {
-            background: var(--panel-bg);
+        .stats-container { display: flex; gap: 10px; }
+        .stat-item {
+            background: #111;
+            padding: 5px 12px;
             border: 1px solid #333;
-            padding: 10px;
+            font-size: 11px;
             text-align: center;
         }
 
-        /* EL ARREGLO PARA LA GRÁFICA */
-        .chart-viewport {
+        /* 3. LAYOUT DE PANELES (Basado en tu diseño de 2 columnas) */
+        main {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Mantiene la proporción de tus capturas */
+            gap: 15px;
+            padding: 15px;
+            flex-grow: 1;
+            overflow: hidden; /* Los paneles se ajustan solos */
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
             position: relative;
-            width: 100%;       /* Ocupa todo el ancho disponible */
-            height: 400px;     /* Altura fija o relativa */
-            background: #0a0a0c;
-            border: 1px solid #1a1a1a;
-            box-sizing: border-box;
-            overflow: hidden;  /* Importante para que nada se escape */
+            overflow: hidden;
         }
 
-        #cyberChart {
-            width: 100% !important;
-            height: 100% !important;
+        .panel-header {
+            background: rgba(0, 243, 255, 0.1);
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
         }
 
-        .footer {
-            font-size: 0.8em;
-            color: #666;
-            text-align: right;
+        /* 4. CONTENEDORES ESPECÍFICOS */
+        .chart-container { flex: 1; position: relative; padding: 10px; }
+        #map { height: 280px; width: 100%; background: #000; }
+        
+        .threat-log {
+            flex: 1;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--neon-pink);
+            overflow-y: auto; /* Solo permite scroll vertical interno */
+            background: rgba(0, 0, 0, 0.4);
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1000px) {
+            main { grid-template-columns: 1fr; overflow-y: auto; }
+            body { overflow-y: auto; }
         }
     </style>
 </head>
 <body>
 
-<div class="sentinel-container">
-    <div class="header">
-        <h1 style="color: var(--neon-pink); margin: 0;">SENTINEL v3.1</h1>
-        <div class="stats-row">
-            <div class="stat-card">CPU: <span style="color: var(--neon-cyan);">16%</span></div>
-            <div class="stat-card">RAM: <span style="color: var(--neon-cyan);">65%</span></div>
-            <div class="stat-card">RISK: <span style="color: var(--neon-pink);">MAX</span></div>
+    <header>
+        <div style="font-size: 24px; font-weight: bold; color: var(--neon-cyan);">SENTINEL <span style="color:#fff">v3.1</span></div>
+        <div class="stats-container">
+            <div class="stat-item">CPU: <span style="color:var(--neon-cyan)">16%</span></div>
+            <div class="stat-item">RAM: <span style="color:var(--neon-cyan)">65%</span></div>
+            <div class="stat-item">NODOS: <span style="color:var(--neon-cyan)">46%</span></div>
+            <div class="stat-item">RISK: <span style="color:var(--neon-pink)">MAX</span></div>
         </div>
-    </div>
+    </header>
 
-    <div class="chart-viewport">
-        <canvas id="cyberChart"></canvas>
-    </div>
+    <main>
+        <section class="panel">
+            <div class="panel-header">● TRAFICO DE RED (SIMULATED AUDIT)</div>
+            <div class="chart-container">
+                <canvas id="networkChart"></canvas>
+            </div>
+        </section>
 
-    <div class="footer">
-        [ NODE_STATUS: ACTIVE | ENCRYPTION: AES-256 ]
-    </div>
-</div>
+        <div style="display: flex; flex-direction: column; gap: 15px; overflow: hidden;">
+            <section class="panel">
+                <div class="panel-header">● GEO-LOCALIZACIÓN IP</div>
+                <div id="map"></div>
+            </section>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <section class="panel" style="flex: 1;">
+                <div class="panel-header">● AMENAZAS EN TIEMPO REAL</div>
+                <div class="threat-log" id="log">
+                    [21:56:49] ALERT: SQL INJECTION BLOCKED -> 185.220.101.4<br>
+                    [21:56:46] ALERT: SQL INJECTION BLOCKED -> 192.168.1.45<br>
+                </div>
+            </section>
+        </div>
+    </main>
 
-<script>
-    const ctx = document.getElementById('cyberChart').getContext('2d');
-    
-    // Gradiente para que se vea Pro
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(0, 243, 255, 0.3)');
-    gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    const myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: Array.from({length: 20}, (_, i) => i + ":00"),
-            datasets: [{
-                label: 'Network Traffic',
-                data: Array.from({length: 20}, () => Math.floor(Math.random() * 100)),
-                borderColor: '#00f3ff',
-                backgroundColor: gradient,
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,           // Esta es la magia
-            maintainAspectRatio: false, // Permite que use el alto del contenedor CSS
-            plugins: {
-                legend: { display: false }
+    <script>
+        // --- Lógica de la Gráfica ---
+        const ctx = document.getElementById('networkChart').getContext('2d');
+        const networkChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 20}, (_, i) => i + ":00"),
+                datasets: [{
+                    label: 'Traffic',
+                    data: Array.from({length: 20}, () => Math.floor(Math.random() * 80 + 20)),
+                    borderColor: '#00f3ff',
+                    backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#1a1a1a' },
-                    ticks: { color: '#666' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#666' }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // CLAVE PARA QUE NO SE SALGA
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#1a1a1a' }, ticks: { color: '#555' } },
+                    x: { grid: { display: false }, ticks: { color: '#555' } }
                 }
             }
-        }
-    });
+        });
 
-    // Forzar redibujado si la ventana cambia bruscamente
-    window.addEventListener('resize', () => {
-        myChart.resize();
-    });
-</script>
+        // --- Lógica del Mapa (Leaflet) ---
+        const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
 
+        // --- Lógica del Log (Simulación) ---
+        const log = document.getElementById('log');
+        const ips = ["185.220.101.4", "192.168.1.45", "45.15.22.112", "104.21.45.12"];
+        
+        setInterval(() => {
+            const time = new Date().toLocaleTimeString();
+            const ip = ips[Math.floor(Math.random() * ips.length)];
+            const newEntry = `[${time}] ALERT: UNKNOWN ACCESS ATTEMPT -> ${ip}<br>`;
+            log.innerHTML += newEntry;
+            log.scrollTop = log.scrollHeight;
+            
+            // Actualizar gráfica aleatoriamente
+            networkChart.data.datasets[0].data.shift();
+            networkChart.data.datasets[0].data.push(Math.floor(Math.random() * 80 + 20));
+            networkChart.update();
+        }, 3000);
+    </script>
 </body>
 </html>
