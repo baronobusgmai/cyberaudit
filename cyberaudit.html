@@ -2,194 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SENTINEL v3.1 // CYBER AUDIT CLOUD</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL v3.1 - Monitor</title>
     <style>
-        :root{
-          --c:#00ffe7; --m:#ff00aa; --y:#ffe600; --r:#ff2255; --g:#00ff88;
-          --bg:#06080f; --bg2:#0d1120; --border:#1e2d45; --text:#d8eaf8; --muted:#4a6480;
-          --fd:'Orbitron',monospace; --fm:'Share Tech Mono',monospace; --fb:'Rajdhani',sans-serif;
-        }
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        body{
-          background:var(--bg);
-          background-image: radial-gradient(ellipse 80% 35% at 50% -5%,#00ffe718,transparent 65%);
-          color:var(--text); font-family:var(--fb); font-size:15px; font-weight:600; min-height:100vh;
-          overflow-x: hidden;
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --bg-dark: #050505;
+            --panel-bg: rgba(20, 20, 25, 0.9);
         }
 
-        /* HEADER */
-        header {
-          display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
-          padding:12px 24px; border-bottom:1px solid var(--border);
-          background:#06080fee; backdrop-filter:blur(12px); position:sticky; top:0; z-index:1000;
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden; /* Prohibido el scroll horizontal */
         }
-        .logo{ font-family:var(--fd); font-size:1.2rem; font-weight:900; letter-spacing:4px; color:var(--c); text-shadow:0 0 15px var(--c); }
-        .logo em { color:var(--m); font-style:normal; }
 
-        .stats-bar { display:flex; gap:10px; }
-        .chip {
-          padding:5px 12px; border:1px solid var(--border); background:#0d112099;
-          display:flex; flex-direction:column; align-items:center;
+        /* CONTENEDOR MAESTRO */
+        .sentinel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .chip label { font-size: 10px; color: var(--muted); font-family: var(--fm); }
-        .chip span { font-family: var(--fm); font-size: 14px; color: var(--c); }
 
-        /* GRID */
-        main { padding: 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .card { 
-            background: var(--bg2); border: 1px solid var(--border); padding: 20px; border-radius: 4px; 
-            position: relative; overflow: hidden;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-cyan);
+            padding-bottom: 10px;
         }
-        .card::before { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background: var(--c); box-shadow: 0 0 10px var(--c); }
-        
-        .ct { font-family: var(--fd); font-size: 12px; letter-spacing: 2px; color: var(--muted); margin-bottom: 15px; display:flex; align-items:center; gap:8px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); animation: blink 1.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.2; } }
 
-        /* TABLE */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-family: var(--fm); }
-        th { text-align: left; color: var(--muted); font-size: 11px; padding: 10px; border-bottom: 1px solid var(--border); }
-        td { padding: 10px; border-bottom: 1px solid #111827; font-size: 13px; }
-        .risk-high { color: var(--r); text-shadow: 0 0 5px var(--r); }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
 
-        #map { height: 300px; width: 100%; margin-top: 10px; border: 1px solid var(--border); 
-               filter: invert(100%) hue-rotate(180deg) brightness(0.5); }
+        .stat-card {
+            background: var(--panel-bg);
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
 
-        @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+        /* EL ARREGLO PARA LA GRÁFICA */
+        .chart-viewport {
+            position: relative;
+            width: 100%;       /* Ocupa todo el ancho disponible */
+            height: 400px;     /* Altura fija o relativa */
+            background: #0a0a0c;
+            border: 1px solid #1a1a1a;
+            box-sizing: border-box;
+            overflow: hidden;  /* Importante para que nada se escape */
+        }
+
+        #cyberChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .footer {
+            font-size: 0.8em;
+            color: #666;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="logo">SEN<em>TINEL</em> v3.1</div>
-    <div class="stats-bar">
-        <div class="chip"><label>CPU</label><span id="cpu">0%</span></div>
-        <div class="chip"><label>RAM</label><span id="ram">0%</span></div>
-        <div class="chip"><label>NODOS</label><span id="nodos">0</span></div>
-        <div class="chip"><label>RISK</label><span id="risk" style="color:var(--r)">MAX</span></div>
+<div class="sentinel-container">
+    <div class="header">
+        <h1 style="color: var(--neon-pink); margin: 0;">SENTINEL v3.1</h1>
+        <div class="stats-row">
+            <div class="stat-card">CPU: <span style="color: var(--neon-cyan);">16%</span></div>
+            <div class="stat-card">RAM: <span style="color: var(--neon-cyan);">65%</span></div>
+            <div class="stat-card">RISK: <span style="color: var(--neon-pink);">MAX</span></div>
+        </div>
     </div>
-</header>
 
-<main>
-    <section style="display:flex; flex-direction:column; gap:20px;">
-        <div class="card">
-            <div class="ct"><span class="dot"></span> TRAFICO DE RED (SIMULATED AUDIT)</div>
-            <canvas id="netChart" style="height: 200px;"></canvas>
-        </div>
+    <div class="chart-viewport">
+        <canvas id="cyberChart"></canvas>
+    </div>
 
-        <div class="card">
-            <div class="ct"><span class="dot" style="background:var(--m); box-shadow:0 0 8px var(--m)"></span> NODOS DETECTADOS</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>IP TARGET</th>
-                        <th>OSINT DESC</th>
-                        <th>VOLUMEN</th>
-                        <th>RIESGO</th>
-                        <th>ESTADO</th>
-                    </tr>
-                </thead>
-                <tbody id="node-body">
-                    </tbody>
-            </table>
-        </div>
-    </section>
+    <div class="footer">
+        [ NODE_STATUS: ACTIVE | ENCRYPTION: AES-256 ]
+    </div>
+</div>
 
-    <section style="display:flex; flex-direction:column; gap:20px;">
-        <div class="card">
-            <div class="ct"><span class="dot" style="background:var(--y); box-shadow:0 0 8px var(--y)"></span> GEO-LOCALIZACIÓN IP</div>
-            <div id="map"></div>
-        </div>
-
-        <div class="card">
-            <div class="ct"><span class="dot" style="background:var(--r); box-shadow:0 0 8px var(--r)"></span> AMENAZAS EN TIEMPO REAL</div>
-            <div id="events" style="font-family: var(--fm); font-size: 12px; height: 200px; overflow-y: auto; line-height: 1.6;">
-                </div>
-        </div>
-    </section>
-</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // --- Lógica de Simulación Sentinel ---
-    const ctx = document.getElementById('netChart').getContext('2d');
-    let netData = Array(30).fill(0);
-    const netChart = new Chart(ctx, {
+    const ctx = document.getElementById('cyberChart').getContext('2d');
+    
+    // Gradiente para que se vea Pro
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(0, 243, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
+
+    const myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: netData.map((_, i) => i),
+            labels: Array.from({length: 20}, (_, i) => i + ":00"),
             datasets: [{
-                label: 'Network throughput (KB/s)',
-                data: netData,
-                borderColor: '#00ffe7',
+                label: 'Network Traffic',
+                data: Array.from({length: 20}, () => Math.floor(Math.random() * 100)),
+                borderColor: '#00f3ff',
+                backgroundColor: gradient,
                 borderWidth: 2,
                 fill: true,
-                backgroundColor: 'rgba(0, 255, 231, 0.1)',
                 tension: 0.4,
                 pointRadius: 0
             }]
         },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            scales: { y: { display: false }, x: { display: false } },
-            plugins: { legend: { display: false } }
+        options: {
+            responsive: true,           // Esta es la magia
+            maintainAspectRatio: false, // Permite que use el alto del contenedor CSS
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#1a1a1a' },
+                    ticks: { color: '#666' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#666' }
+                }
+            }
         }
     });
 
-    function updateSim() {
-        // Stats
-        document.getElementById('cpu').innerText = Math.floor(Math.random() * 15 + 5) + "%";
-        document.getElementById('ram').innerText = Math.floor(Math.random() * 10 + 65) + "%";
-        document.getElementById('nodos').innerText = Math.floor(Math.random() * 5 + 42);
-
-        // Chart
-        netData.push(Math.random() * 100);
-        netData.shift();
-        netChart.update('none');
-
-        // Logs
-        const logs = document.getElementById('events');
-        const ips = ["192.168.1.45", "104.26.10.23", "185.220.101.4", "45.33.2.121"];
-        const msgs = ["PORT SCAN DETECTED", "UDP FLOOD ATTEMPT", "UNAUTHORIZED SSH LOGIN", "SQL INJECTION BLOCKED"];
-        
-        if(Math.random() > 0.8) {
-            const time = new Date().toLocaleTimeString();
-            logs.innerHTML = `<p style="color:var(--r)">[${time}] ALERT: ${msgs[Math.floor(Math.random()*msgs.length)]} -> ${ips[Math.floor(Math.random()*ips.length)]}</p>` + logs.innerHTML;
-        }
-    }
-
-    // Nodos
-    const nodes = [
-        {ip: "192.168.1.1", desc: "Gateway Principal (Router)", vol: "1.2 GB", risk: 0},
-        {ip: "185.220.101.4", desc: "TOR Exit Node | Alemania", vol: "450 MB", risk: 85},
-        {ip: "104.26.10.23", desc: "Cloudflare Net | USA", vol: "12 MB", risk: 15},
-        {ip: "45.33.2.121", desc: "Linode DC | Singapore", vol: "89 KB", risk: 65}
-    ];
-
-    document.getElementById('node-body').innerHTML = nodes.map(n => `
-        <tr>
-            <td style="color:var(--c)">${n.ip}</td>
-            <td style="color:var(--muted)">${n.desc}</td>
-            <td>${n.vol}</td>
-            <td class="${n.risk > 50 ? 'risk-high' : ''}">${n.risk}%</td>
-            <td><span style="color:var(--g)">● ACTIVE</span></td>
-        </tr>
-    `).join('');
-
-    // Mapa (Barcelona como ejemplo por tu captura anterior BCN-BITNAP)
-    const map = L.map('map').setView([41.3851, 2.1734], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    nodes.filter(n => n.risk > 10).forEach(n => {
-        L.circleMarker([Math.random()*120-60, Math.random()*240-120], {color: n.risk > 70 ? '#ff2255' : '#00ffe7', radius: 5}).addTo(map);
+    // Forzar redibujado si la ventana cambia bruscamente
+    window.addEventListener('resize', () => {
+        myChart.resize();
     });
-
-    setInterval(updateSim, 1000);
 </script>
 
 </body>
